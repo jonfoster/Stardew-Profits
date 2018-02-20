@@ -2,7 +2,7 @@
  * Draws the graph
  */
 
- function Graph(maxCrops) {
+function Graph(maxCrops) {
 	// Prepare variables.
 
 	var svgWidth = 1080;
@@ -10,9 +10,6 @@
 
 	var width = svgWidth - 64;
 	var height = (svgHeight - 56) / 2;
-	var barPadding = 4;
-	var barWidth = width / maxCrops - barPadding;
-	var miniBarWidth = barWidth / 8;
 	var barOffsetX = 56;
 	var barOffsetY = 40;
 
@@ -51,11 +48,6 @@
 	var gTooltips = svg.append("g");
 
 	var axisY;
-	var barsProfit;
-	var barsSeed;
-	var barsFert;
-	var imgIcons;
-	var barsTooltips;
 
 	/*
 	 * Formats a specified number, adding separators for thousands.
@@ -94,10 +86,16 @@
 	 */
 	function GraphHelper(cropList, options) {
 		var graphHelper = this;
-		this.x = d3.scale.ordinal()
+
+		var barPadding = 4;
+		var barSpacing = width / maxCrops;
+		var barWidth = barSpacing - barPadding;
+		var miniBarWidth = barWidth / 8;
+
+		var scale_x = d3.scale.ordinal()
 			.domain(d3.range(maxCrops))
 			.rangeRoundBands([0, width]);
-		this.y = d3.scale.linear()
+		var scale_y = d3.scale.linear()
 			.domain([0, d3.max(cropList, function (d) {
 				return getRoundedAbsoluteHeight(d, options);
 			})])
@@ -117,22 +115,27 @@
 		if (options.buyFert)
 			numMiniBars++;
 
+		this.setGraphSize = function () {
+			svg.attr("width", barOffsetX + barPadding * 2 + (barSpacing) * cropList.length);
+			d3.select(".graph").attr("width", barOffsetX + barPadding * 2 + (barSpacing) * cropList.length);
+		}
+
 		this.configBarsProfit = function (target) {
 			(target
 				.attr("x", function(d, i) { 
-					return graphHelper.x(i) + barOffsetX + miniBarWidth * numMiniBars;
+					return scale_x(i) + barOffsetX + miniBarWidth * numMiniBars;
 				})
 				.attr("y", function(d) { 
 					if (d.drawProfit >= 0)
-						return graphHelper.y(d.drawProfit) + barOffsetY;
+						return scale_y(d.drawProfit) + barOffsetY;
 					else 
 						return height + barOffsetY;
 				})
 				.attr("height", function(d) { 
 					if (d.drawProfit >= 0)
-						return height - graphHelper.y(d.drawProfit);
+						return height - scale_y(d.drawProfit);
 					else 
-						return height - graphHelper.y(-d.drawProfit);
+						return height - scale_y(-d.drawProfit);
 				})
 				.attr("width", function(d) { 
 					return barWidth - miniBarWidth * numMiniBars;
@@ -148,7 +151,7 @@
 		
 		this.configBarsSeed = function (target) {
 			(target
-				.attr("x", function(d, i) { return graphHelper.x(i) + barOffsetX; })
+				.attr("x", function(d, i) { return scale_x(i) + barOffsetX; })
 				.attr("y", height + barOffsetY)
 				.attr("height", function(d) { 
 					if (options.buySeed)
@@ -165,14 +168,14 @@
 			(target
 				.attr("x", function(d, i) { 
 					if (options.buySeed)
-						return graphHelper.x(i) + barOffsetX + miniBarWidth; 
+						return scale_x(i) + barOffsetX + miniBarWidth; 
 					else
-						return graphHelper.x(i) + barOffsetX; 
+						return scale_x(i) + barOffsetX; 
 				})
 				.attr("y", height + barOffsetY)
 				.attr("height", function(d) { 
 					if (options.buyFert)
-						return height - graphHelper.y(-d.drawFertLoss); 
+						return height - scale_y(-d.drawFertLoss); 
 					else
 						return 0;
 				})
@@ -183,12 +186,12 @@
 		
 		this.configIcons = function (target) {
 			(target
-				.attr("x", function(d, i) { return graphHelper.x(i) + barOffsetX; })
+				.attr("x", function(d, i) { return scale_x(i) + barOffsetX; })
 				.attr("y", function(d) { 
 					if (d.drawProfit >= 0)
-						return graphHelper.y(d.drawProfit) + barOffsetY - barWidth - barPadding;
+						return scale_y(d.drawProfit) + barOffsetY - barSpacing;
 					else 
-						return height + barOffsetY - barWidth - barPadding;
+						return height + barOffsetY - barSpacing;
 				})
 				.attr('width', barWidth)
 				.attr('height', barWidth)
@@ -199,20 +202,23 @@
 		/* Set size of the mouseover target that triggers tooltips */
 		this.configTooltips = function (target) {
 			(target
-				.attr("x", function(d, i) { return graphHelper.x(i) + barOffsetX - barPadding/2; })
-				.attr("y", function(d) { 
+				.attr("x", function(d, i) { return scale_x(i) + barOffsetX - barPadding/2; })
+				.attr("y", function(d) {
+					var base;
 					if (d.drawProfit >= 0)
-						return graphHelper.y(d.drawProfit) + barOffsetY - barWidth - barPadding;
+						base = scale_y(d.drawProfit);
 					else 
-						return height + barOffsetY - barWidth - barPadding;
+						base = height;
+					return base + barOffsetY - barSpacing;
 				})
 				.attr("height", function(d) { 
-					var topHeight = 0;
-
+					var base;
 					if (d.drawProfit >= 0)
-						topHeight = height + barWidth + barPadding - graphHelper.y(d.drawProfit);
-					else
-						topHeight = barWidth + barPadding;
+						base = scale_y(d.drawProfit);
+					else 
+						base = height;
+
+					var topHeight = height + barSpacing - base;
 
 					var biggestLoss = 0;
 					if (options.buySeed && d.drawSeedLoss < biggestLoss)
@@ -222,9 +228,9 @@
 					if (d.drawProfit < biggestLoss)
 						biggestLoss = d.drawProfit;
 
-					return topHeight + (height - graphHelper.y(-biggestLoss));
+					return topHeight + (height - scale_y(-biggestLoss));
 				})
-				.attr("width", barWidth + barPadding)
+				.attr("width", barSpacing)
 			);
 		};
 		
@@ -425,43 +431,39 @@
 	 * This is called only when opening for the first time or when changing seasons/seeds.
 	 */
 	function render(cropList, options) {
-
-		svg.attr("width", barOffsetX + barPadding * 2 + (barWidth + barPadding) * cropList.length);
-		d3.select(".graph").attr("width", barOffsetX + barPadding * 2 + (barWidth + barPadding) * cropList.length);
-
 		var graphHelper = new GraphHelper(cropList, options);
-		var x = graphHelper.x;
-		var y = graphHelper.y;
+
+		graphHelper.setGraphSize();
 
 		axisY = gAxis.attr("class", "axis")
 			.call(graphHelper.yAxis)
 			.attr("transform", "translate(48, " + barOffsetY + ")");
 
-		barsProfit = gProfit.selectAll("rect")
+		var barsProfit = gProfit.selectAll("rect")
 			.data(cropList)
 			.enter()
 			.append("rect");
 		graphHelper.configBarsProfit(barsProfit);
 
-		barsSeed = gSeedLoss.selectAll("rect")
+		var barsSeed = gSeedLoss.selectAll("rect")
 			.data(cropList)
 			.enter()
 			.append("rect");
 		graphHelper.configBarsSeed(barsSeed);
 
-		barsFert = gFertLoss.selectAll("rect")
+		var barsFert = gFertLoss.selectAll("rect")
 			.data(cropList)
 			.enter()
 			.append("rect");	
 		graphHelper.configBarsFert(barsFert);
 
-		imgIcons = gIcons.selectAll("image")
+		var imgIcons = gIcons.selectAll("image")
 			.data(cropList)
 			.enter()
 			.append("svg:image");
 		graphHelper.configIcons(imgIcons);
 
-		barsTooltips = gTooltips.selectAll("rect")
+		var barsTooltips = gTooltips.selectAll("rect")
 			.data(cropList)
 			.enter()
 			.append("rect")
@@ -487,11 +489,11 @@
 		axisY.transition()
 			.call(graphHelper.yAxis);
 
-		graphHelper.configBarsProfit(barsProfit.data(cropList).transition());
-		graphHelper.configBarsSeed(barsSeed.data(cropList).transition());
-		graphHelper.configBarsFert(barsFert.data(cropList).transition());
-		graphHelper.configIcons(imgIcons.data(cropList).transition());
-		graphHelper.configTooltips(barsTooltips.data(cropList).transition());
+		graphHelper.configBarsProfit(gProfit.selectAll("rect").data(cropList).transition());
+		graphHelper.configBarsSeed(gSeedLoss.selectAll("rect").data(cropList).transition());
+		graphHelper.configBarsFert(gFertLoss.selectAll("rect").data(cropList).transition());
+		graphHelper.configIcons(gIcons.selectAll("image").data(cropList).transition());
+		graphHelper.configTooltips(gTooltips.selectAll("rect").data(cropList).transition());
 	}
 
 	this.initialRender = function (cropList, options) {
