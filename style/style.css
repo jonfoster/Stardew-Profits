@@ -38,8 +38,11 @@ body {
 	shape-rendering: crispEdges;
 }
 
+.options-wrap {
+	text-align: center;
+}
+
 .options {
-	margin: auto;
 	margin-top: 8px;
 	margin-bottom: 8px;
 	font: 0.875em sans-serif;
@@ -47,16 +50,15 @@ body {
 	background-color: #333333;
 	border-radius: 8px;
 	padding: 8px;
-	width: 768px;
-	height: 174px;
     -webkit-filter: drop-shadow(0px 2px 8px rgba(0,0,0,0.75));
     -ms-filter: "progid:DXImageTransform.Microsoft.Dropshadow(OffX=0, OffY=2, Color='#000')";
     filter: "progid:DXImageTransform.Microsoft.Dropshadow(OffX=0, OffY=2, Color='#000')";
+	display: inline-flex;
 }
 
 .options table {
-	float: left;
 	margin: 4px;
+	flex-grow: 0;
 }
 
 .options table tr td {
