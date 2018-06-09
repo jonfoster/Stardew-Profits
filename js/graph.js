@@ -155,7 +155,7 @@ function Graph(maxCrops) {
 				.attr("y", height + barOffsetY)
 				.attr("height", function(d) { 
 					if (options.buySeed)
-						return height - y(-d.drawSeedLoss); 
+						return height - scale_y(-d.drawSeedLoss); 
 					else
 						return 0;
 				})
@@ -256,7 +256,7 @@ function Graph(maxCrops) {
 		tooltip.selectAll("*").remove();
 		tooltip.style("visibility", "visible");
 
-		tooltip.append("h3").attr("class", "tooltipTitle").text(d.name);
+		tooltip.append("h3").attr("class", "tooltipTitle").text(d.info.name);
 
 		var tooltipTable = tooltip.append("table")
 			.attr("class", "tooltipTable")
@@ -476,7 +476,7 @@ function Graph(maxCrops) {
 					tooltip.style("top", (d3.event.pageY - 16) + "px").style("left",(d3.event.pageX + 20) + "px");
 				})
 				.on("mouseout", function() { tooltip.style("visibility", "hidden"); })
-				.on("click", function(d) { window.open(d.url, "_blank"); });
+				.on("click", function(d) { window.open(d.info.url, "_blank"); });
 		graphHelper.configTooltips(barsTooltips);
 	}
 
