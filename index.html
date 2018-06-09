@@ -111,13 +111,13 @@
 
 			<tr>
 				<td>Farming level:</td>
-				<td><input type="number" id="number_level" value="0" onChange="refresh()"/></td>
+				<td><input type="number" id="number_level" value="10" onChange="refresh()"/></td>
 			</tr>
 
 			<tr>
 				<td>Level 5 skills:</td>
 				<td>
-					<input type="checkbox" id="check_skillsTill" onChange="refresh()" /> Tiller<br />
+					<input type="checkbox" id="check_skillsTill" onChange="refresh()" checked="true" /> Tiller<br />
 				</td>
 			</tr>
 
@@ -125,9 +125,9 @@
 				<td>Level 10 skills:</td>
 				<td>
 					<select id="select_skills" onChange="refresh()">
-						<option value="0" selected="true">None</option>
+						<option value="0">None</option>
 						<option value="1">Agriculturist</option>
-						<option value="2">Artisan</option>
+						<option value="2" selected="true">Artisan</option>
 					</select>
 				</td>
 			</tr>
