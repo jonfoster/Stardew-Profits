@@ -46,11 +46,9 @@
 			<tr>
 				<td>Produce type:</td>
 				<td>
-					<select id="select_produce" onChange="refresh()">
-						<option value="0" selected="true">Raw</option>
-						<option value="1">Jar</option>
-						<option value="2">Keg</option>
-					</select>
+					<input type="checkbox" id="check_produceRaw" onChange="refresh()" checked="true" /> <label for="check_produceRaw">Raw</label><br />
+					<input type="checkbox" id="check_produceJar" onChange="refresh()" /> <label for="check_produceJar">Jar</label><br />
+					<input type="checkbox" id="check_produceKeg" onChange="refresh()" /> <label for="check_produceKeg">Keg</label><br />
 				</td>
 			</tr>
 

@@ -262,74 +262,53 @@ function Graph(maxCrops) {
 			.attr("class", "tooltipTable")
 			.attr("cellspacing", 0);
 		var tooltipTr;
-		
 
-		tooltipTr = tooltipTable.append("tr");
-		tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Total profit:");
-		if (d.profit > 0)
-			tooltipTr.append("td").attr("class", "tooltipTdRightPos").text("+" + formatNumber(d.profit))
-				.append("div").attr("class", "gold");
-		else
-			tooltipTr.append("td").attr("class", "tooltipTdRightNeg").text(formatNumber(d.profit))
-				.append("div").attr("class", "gold");
+		function addRow(leftClassSuffix, rightClassSuffix, isGold, leftText, rightText) {
+			var tooltipTr = tooltipTable.append("tr");
+			tooltipTr.append("td").attr("class", "tooltipTdLeft" + leftClassSuffix).text(leftText);
+			var row2 = tooltipTr.append("td").attr("class", "tooltipTdRight" + rightClassSuffix).text(rightText);
+			if (isGold)
+				row2.append("div").attr("class", "gold");
+		}
 
-		tooltipTr = tooltipTable.append("tr");
-		tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Profit per day:");
-		if (d.averageProfit > 0)
-			tooltipTr.append("td").attr("class", "tooltipTdRightPos").text("+" + formatNumber(d.averageProfit))
-				.append("div").attr("class", "gold");
-		else
-			tooltipTr.append("td").attr("class", "tooltipTdRightNeg").text(formatNumber(d.averageProfit))
-				.append("div").attr("class", "gold");
+		function addRowPosNegGold(leftClassSuffix, leftText, value) {
+			if (value > 0)
+				addRow(leftClassSuffix, "Pos", true, leftText, "+" + formatNumber(value));
+			else
+				addRow(leftClassSuffix, "Neg", true, leftText, formatNumber(value));
+		}
+
+		addRowPosNegGold("", "Total profit:", d.profit);
+		addRowPosNegGold("", "Profit per day:", d.averageProfit);
 
 		if (options.buySeed) {
-			tooltipTr = tooltipTable.append("tr");
-			tooltipTr.append("td").attr("class", "tooltipTdLeftSpace").text("Total seed loss:");
-			tooltipTr.append("td").attr("class", "tooltipTdRightNeg").text(formatNumber(d.seedLoss))
-				.append("div").attr("class", "gold");
-
-			tooltipTr = tooltipTable.append("tr");
-			tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Seed loss per day:");
-			tooltipTr.append("td").attr("class", "tooltipTdRightNeg").text(formatNumber(d.averageSeedLoss))
-				.append("div").attr("class", "gold");
+			addRowPosNegGold("Space", "Total seed loss:", d.seedLoss);
+			addRowPosNegGold("", "Seed loss per day:", d.averageSeedLoss);
 		}
 
 		if (options.buyFert) {
-			tooltipTr = tooltipTable.append("tr");
-			tooltipTr.append("td").attr("class", "tooltipTdLeftSpace").text("Total fertilizer loss:");
-			tooltipTr.append("td").attr("class", "tooltipTdRightNeg").text(formatNumber(d.fertLoss))
-				.append("div").attr("class", "gold");
-
-			tooltipTr = tooltipTable.append("tr");
-			tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Fertilizer loss per day:");
-			tooltipTr.append("td").attr("class", "tooltipTdRightNeg").text(formatNumber(d.averageFertLoss))
-				.append("div").attr("class", "gold");
+			addRowPosNegGold("Space", "Total fertilizer loss:", d.fertLoss);
+			addRowPosNegGold("", "Fertilizer loss per day:", d.averageFertLoss);
 		}
 
-
-		tooltipTr = tooltipTable.append("tr");
-		tooltipTr.append("td").attr("class", "tooltipTdLeftSpace").text("Produce sold:");
-		switch (options.produce) {
-			case 0: tooltipTr.append("td").attr("class", "tooltipTdRight").text("Raw crops"); break;
+		var produceType;
+		switch (d.produce) {
+			case 0: produceType = "Raw crops"; break;
 			case 1: 
-				if (d.produce.jar > 0)
-					tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.produce.jarType);
-				else
-					tooltipTr.append("td").attr("class", "tooltipTdRightNeg").text("None");
+				if (d.info.produce.jar > 0)
+					produceType = d.info.produce.jarType;
 				break;
 			case 2:
-				if (d.produce.keg > 0)
-					tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.produce.kegType);
-				else
-					tooltipTr.append("td").attr("class", "tooltipTdRightNeg").text("None");
+				if (d.info.produce.keg > 0)
+					produceType = d.info.produce.kegType;
 				break;
 		}
-		tooltipTr = tooltipTable.append("tr");
-		tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Duration:");
-		tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.duration + " days");
-		tooltipTr = tooltipTable.append("tr");
-		tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Harvests:");
-		tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.harvests);
+		if (produceType)
+			addRow("Space", "", false, "Produce sold:", produceType);
+		else
+			addRow("Space", "Neg", false, "Produce sold:", "None");
+		addRow("", "", false, "Duration:", d.duration + " days");
+		addRow("", "", false, "Harvests:", d.harvests);
 
 		if (options.extra) {
 
@@ -338,90 +317,48 @@ function Graph(maxCrops) {
 				.attr("class", "tooltipTable")
 				.attr("cellspacing", 0);
 
-			tooltipTr = tooltipTable.append("tr");
-			tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Value (Normal):");
-			tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.produce.rawN)
-				.append("div").attr("class", "gold");
-			tooltipTr = tooltipTable.append("tr");
-			tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Value (Silver):");
-			tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.produce.rawS)
-				.append("div").attr("class", "gold");
-			tooltipTr = tooltipTable.append("tr");
-			tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Value (Gold):");
-			tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.produce.rawG)
-				.append("div").attr("class", "gold");
-			tooltipTr = tooltipTable.append("tr");
+			var rawMultiplier = (options.skills.till ? 1.1 : 1);
+
+			addRow("", "", true, "Value (Normal):", formatNumber(d.info.produce.rawN * rawMultiplier));
+			addRow("", "", true, "Value (Silver):", formatNumber(d.info.produce.rawS * rawMultiplier));
+			addRow("", "", true, "Value (Gold):", formatNumber(d.info.produce.rawG * rawMultiplier));
+			addRow("", "", true, "Value (Average):", formatNumber(d.sellPriceRaw));
 			if (d.info.produce.jar > 0) {
-				tooltipTr.append("td").attr("class", "tooltipTdLeftSpace").text("Value (" + d.info.produce.jarType + "):");
-				tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.produce.jar)
-				.append("div").attr("class", "gold");
+				addRow("Space", "", true, "Value (" + d.info.produce.jarType + "):", formatNumber(d.sellPriceJar));
 			}
 			else {
-				tooltipTr.append("td").attr("class", "tooltipTdLeftSpace").text("Value (Jar):");
-				tooltipTr.append("td").attr("class", "tooltipTdRight").text("None");
+				addRow("Space", "", false, "Value (Jar):", "None");
 			}
-			tooltipTr = tooltipTable.append("tr");
 			if (d.info.produce.keg > 0) {
-				tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Value (" + d.info.produce.kegType + "):");
-				tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.produce.keg)
-				.append("div").attr("class", "gold");
+				addRow("", "", true, "Value (" + d.info.produce.kegType + "):", formatNumber(d.sellPriceKeg));
 			}
 			else {
-				tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Value (Keg):");
-				tooltipTr.append("td").attr("class", "tooltipTdRight").text("None");
+				addRow("", "", false, "Value (Keg):", "None");
 			}
 
-
-			var first = true;
+			var spaceIfFirst = "Space";
 			if (d.info.seeds.pierre > 0) {
-				tooltipTr = tooltipTable.append("tr");
-				tooltipTr.append("td").attr("class", "tooltipTdLeftSpace").text("Seeds (Pierre):");
-				first = false;
-				tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.seeds.pierre)
-				.append("div").attr("class", "gold");
+				addRow(spaceIfFirst, "", true, "Seeds (Pierre):", d.info.seeds.pierre);
+				spaceIfFirst = "";
 			}
 			if (d.info.seeds.joja > 0) {
-				tooltipTr = tooltipTable.append("tr");
-				if (first) {
-					tooltipTr.append("td").attr("class", "tooltipTdLeftSpace").text("Seeds (Joja):");
-					first = false;
-				}
-				else
-					tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Seeds (Joja):");
-				tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.seeds.joja)
-				.append("div").attr("class", "gold");
+				addRow(spaceIfFirst, "", true, "Seeds (Joja):", d.info.seeds.joja);
+				spaceIfFirst = "";
 			}
 			if (d.info.seeds.special > 0) {
-				tooltipTr = tooltipTable.append("tr");
-				if (first) {
-					tooltipTr.append("td").attr("class", "tooltipTdLeftSpace").text("Seeds (Special):");
-					first = false;
-				}
-				else
-					tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Seeds (Special):");
-				tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.seeds.special)
-				.append("div").attr("class", "gold");
-				tooltipTr = tooltipTable.append("tr");
-				tooltipTr.append("td").attr("class", "tooltipTdLeft").text("");
-				tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.seeds.specialLoc);
+				addRow(spaceIfFirst, "", true, "Seeds (Special):", d.info.seeds.special);
+				spaceIfFirst = "";
+				addRow("", "", false, "", d.info.seeds.specialLoc);
 			}
 
-			tooltipTr = tooltipTable.append("tr");
-			tooltipTr.append("td").attr("class", "tooltipTdLeftSpace").text("Time to grow:");
-			tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.growth.initial + " days");
-			tooltipTr = tooltipTable.append("tr");
-			tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Time to regrow:");
+			addRow("Space", "", false, "Time to grow:", d.info.growth.initial + " days");
 			if (d.info.growth.regrow > 0)
-				tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.growth.regrow + " days");
+				addRow("", "", false, "Time to regrow:", d.info.growth.regrow + " days");
 			else
-				tooltipTr.append("td").attr("class", "tooltipTdRight").text("N/A");
+				addRow("", "", false, "Time to regrow:", "N/A");
 			if (d.info.produce.extra > 0) {
-				tooltipTr = tooltipTable.append("tr");
-				tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Extra produce:");
-				tooltipTr.append("td").attr("class", "tooltipTdRight").text(d.info.produce.extra);
-				tooltipTr = tooltipTable.append("tr");
-				tooltipTr.append("td").attr("class", "tooltipTdLeft").text("Extra chance:");
-				tooltipTr.append("td").attr("class", "tooltipTdRight").text((d.info.produce.extraPerc * 100) + "%");
+				addRow("", "", false, "Extra produce:", d.info.produce.extra);
+				addRow("", "", false, "Extra chance:", (d.info.produce.extraPerc * 100) + "%");
 			}
 		}
 	}

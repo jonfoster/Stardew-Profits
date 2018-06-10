@@ -7,7 +7,11 @@ var graph = new Graph(seasons[3].crops.length);
 function getOptions() {
 	// Options used to draw the graph.
 	var options = {
-		"produce" : 0,
+		"produce" : {
+			"raw": true,
+			"jar": false,
+			"keg": false
+		},
 		"planted": 1,
 		"days": 28,
 		"fertilizer": 2,
@@ -51,7 +55,9 @@ function getOptions() {
 		options.days = document.getElementById('number_days').value;
 	}
 
-	options.produce = parseInt(document.getElementById('select_produce').value);
+	options.produce.raw = document.getElementById('check_produceRaw').checked;
+	options.produce.jar = document.getElementById('check_produceJar').checked;
+	options.produce.keg = document.getElementById('check_produceKeg').checked;
 
 	if (document.getElementById('number_planted').value <= 0)
 		document.getElementById('number_planted').value = 1;

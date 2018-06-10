@@ -55,14 +55,16 @@ valueCrops = (function() {
 
 		// console.log("=== " + cropInfo.name + " ===");
 
-		var harvests = 0;
-		var duration = 0;
-		var nextHarvestDay = 1;
+        var daysToGrow;
 
 		if (options.skills.agri)
-			nextHarvestDay += Math.floor(cropInfo.growth.initial * (fertilizer.growth - 0.1));
+			daysToGrow = Math.floor(cropInfo.growth.initial * (fertilizer.growth - 0.1));
 		else
-			nextHarvestDay += Math.floor(cropInfo.growth.initial * fertilizer.growth);
+			daysToGrow = Math.floor(cropInfo.growth.initial * fertilizer.growth);
+
+		var harvests = 0;
+		var duration = 0;
+		var nextHarvestDay = 1 + daysToGrow;
 
 		while (nextHarvestDay <= remainingDays) {
 			harvests++;
@@ -74,7 +76,7 @@ valueCrops = (function() {
 			}
 			else {
 				// console.log("Harvest on day: " + day);
-				nextHarvestDay += Math.floor(cropInfo.growth.initial * fertilizer.growth);
+				nextHarvestDay += daysToGrow;
 			}
 		} 
 
@@ -90,61 +92,69 @@ valueCrops = (function() {
 				seedCost = cropInfo.seeds.special;
 
 		if (cropInfo.growth.regrow == 0 && cropInfo.harvests > 0)
-			seedCost = seedCost * harvests;
+			seedCost *= harvests;
+
+		var extraItems = cropInfo.produce.extraPerc * cropInfo.produce.extra * harvests;
+
+		// Find selling price
+
+		var percentG = qualityPercentages.gold[fertilizer.qualityLevel][options.level];
+		var percentS = qualityPercentages.silver[fertilizer.qualityLevel][options.level];
+		var ratioG = percentG / 100;
+		var ratioS = ((100 - percentG) * percentS) / 10000;
+		// This formula is carefully written to avoid loss of precision due to
+		// subtracting small numbers.  Otherwise it comes up with values
+		// larger than rawG when dealing with good fertilizer and high skill levels.
+		var sellPriceRaw = (
+			cropInfo.produce.rawN +
+			(cropInfo.produce.rawS - cropInfo.produce.rawN) * ratioS +
+			(cropInfo.produce.rawG - cropInfo.produce.rawN) * ratioG);
+
+		if (options.skills.till) {
+			sellPriceRaw *= 1.1;
+		}
+
+		var sellPriceJar = cropInfo.produce.jar;
+		var sellPriceKeg = cropInfo.produce.keg;
+		if (options.skills.arti) {
+			sellPriceJar *= 1.4;
+			sellPriceKeg *= 1.4;
+		}
+
+		var totalItems = (harvests + extraItems) * options.planted;
+
+		var produce = -1;
+		var sellPrice = 0;
+        
+        if (options.produce.raw && sellPrice < sellPriceRaw) {
+            produce = 0;
+            sellPrice = sellPriceRaw;
+        }
+        if (options.produce.jar && sellPrice < sellPriceJar) {
+            produce = 1;
+            sellPrice = sellPriceJar;
+        }
+        if (options.produce.keg && sellPrice < sellPriceKeg) {
+            produce = 2;
+            sellPrice = sellPriceKeg;
+        }
+
+		// TODO are extra crops only normal quality?
+		sellPrice *= totalItems;
 
 		seedCost *= options.planted;
 
-		// Find selling price
-		var sellPrice;
-		if (options.produce == 0) {
-			var fertilizer = fertilizers[options.fertilizer];
-
-			var percentG = qualityPercentages.gold[fertilizer.qualityLevel][options.level];
-			var percentS = qualityPercentages.silver[fertilizer.qualityLevel][options.level];
-
-			var ratioG = percentG / 100;
-			var ratioS = (1 - ratioG) * percentS / 100;
-			var ratioN = 1 - ratioS - ratioG;
-
-			sellPrice = harvests * (
-				cropInfo.produce.rawN * ratioN +
-				cropInfo.produce.rawS * ratioS +
-				cropInfo.produce.rawG * ratioG);
-			// console.log("Selling price (After normal produce): " + sellPrice);
-
-			if (cropInfo.produce.extra > 0) {
-				// TODO are extra crops really always normal quality?
-				sellPrice += cropInfo.produce.rawN * cropInfo.produce.extraPerc * cropInfo.produce.extra * harvests;
-				// console.log("Selling price (After extra produce): " + sellPrice);
-			}
-
-			if (options.skills.till) {
-				sellPrice *= 1.1;
-
-				// console.log("Selling price (After skills): " + sellPrice);
-			}
-		}
-		else {
-			var items = harvests;
-			items += cropInfo.produce.extraPerc * cropInfo.produce.extra * harvests;
-
-			switch (options.produce) {
-				case 1: sellPrice = items * cropInfo.produce.jar; break;
-				case 2: sellPrice = items * cropInfo.produce.keg; break;
-			}
-			
-			if (options.skills.arti) {
-				sellPrice *= 1.4;
-			}
-		}
-
-		sellPrice *= options.planted;
 
 		// console.log("Harvests: " + harvests);
 		return {"harvests": harvests,
+				"extraItems": extraItems,
 				"duration": duration,
 				"seedLoss": -seedCost,
-				"sellPrice": sellPrice};
+				"produce": produce,
+				"sellPrice": sellPrice,
+				"sellPriceRaw": sellPriceRaw,
+				"sellPriceJar": sellPriceJar,
+				"sellPriceKeg": sellPriceKeg};
 	}
 
 	/*
@@ -213,7 +223,11 @@ valueCrops = (function() {
 			cropList[i].harvests = growth_info.harvests;
 			cropList[i].duration = growth_info.duration;
 			cropList[i].seedLoss = growth_info.seedLoss;
+			cropList[i].produce = growth_info.produce;
 			cropList[i].sellPrice = growth_info.sellPrice;
+			cropList[i].sellPriceRaw = growth_info.sellPriceRaw;
+			cropList[i].sellPriceJar = growth_info.sellPriceJar;
+			cropList[i].sellPriceKeg = growth_info.sellPriceKeg;
 			cropList[i].fertLoss = fertLoss(options);
 			cropList[i].profit = profit(cropList[i], growth_info.sellPrice, options);
 			cropList[i].averageProfit = perDay(cropList[i].profit, options);
